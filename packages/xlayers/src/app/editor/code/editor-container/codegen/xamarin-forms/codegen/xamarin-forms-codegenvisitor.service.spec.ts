@@ -14,5 +14,7 @@ describe('XamarinFormsCodeGenVisitor', () => {
     });
   });
 
-  // todo: add some tests
+  it('should add some tests', () => {
+    // todo: add some tests
+  });
 });
