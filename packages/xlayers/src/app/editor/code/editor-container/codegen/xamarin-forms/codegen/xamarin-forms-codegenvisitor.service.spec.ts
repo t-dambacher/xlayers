@@ -14,7 +14,10 @@ describe('XamarinFormsCodeGenVisitor', () => {
     });
   });
 
-  it('should add some tests', () => {
-    // todo: add some tests
-  });
+  it('should add some tests', inject(
+    [XamarinFormsCodeGenVisitor],
+    (service: XamarinFormsCodeGenVisitor) => {
+      expect(service).toBeTruthy();
+    }
+  ));
 });

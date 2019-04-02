@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CodeGenFacade, XlayersNgxEditorModel } from '../codegen.service';
 import { XamarinFormsCodeGenVisitor } from './codegen/xamarin-forms-codegenvisitor.service';
-import { readmeTemplate } from './xamarin-forms.template';
+import { readmeTemplate, applicationTemplate, mainPageTemplate } from './xamarin-forms.template';
 
 /**
  * @see CodeGenFacade implementation able to generate Xamarin.Forms code
@@ -15,7 +15,7 @@ export class XamarinFormsCodeGenService implements CodeGenFacade {
 
   buttons() {
     return {
-      stackblitz: true
+      stackblitz: false
     };
   }
 
@@ -28,9 +28,27 @@ export class XamarinFormsCodeGenService implements CodeGenFacade {
         kind: 'text'
       },
       {
-        uri: 'Form.xaml',
+        uri: 'App.xaml',
+        value: this.generateApplicationTemplate(),
+        language: 'xaml',
+        kind: 'xamarinForms'
+      },
+      {
+        uri: 'MainPage.xaml',
         value: this.generateComponent(ast),
         language: 'xaml',
+        kind: 'xamarinForms'
+      },
+      {
+        uri: 'style.css',
+        value: '*{}',
+        language: 'css',
+        kind: 'xamarinForms'
+      },
+      {
+        uri: 'ast.json',
+        value: JSON.stringify(ast, null, 2),
+        language: 'JSON',
         kind: 'xamarinForms'
       }
     ];
@@ -40,7 +58,11 @@ export class XamarinFormsCodeGenService implements CodeGenFacade {
     return readmeTemplate();
   }
 
+  private generateApplicationTemplate() {
+    return applicationTemplate();
+  }
+
   private generateComponent(ast: SketchMSLayer) {
-    return this.codegen.generateTemplate(ast);
+    return this.codegen.generateTemplate(ast, mainPageTemplate);
   }
 }

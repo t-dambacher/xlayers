@@ -1,4 +1,5 @@
 import { CodeGenVisitor } from './codegenvisitor.service';
+import { RouteConfigLoadEnd } from '@angular/router';
 
 /**
  * @see CodeGenVisitor implementation that can be used to generate code in an XML-based representation.
@@ -18,6 +19,6 @@ export abstract class XmlCodeGenVisitor extends CodeGenVisitor {
 
   protected indent(n: number, content: string): string {
     const indentation = !!n ? this.indentationSymbol.repeat(n) : '';
-    return indentation + content;
+    return indentation + content.split('\n').join('\n' + indentation);
   }
 }

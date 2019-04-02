@@ -81,15 +81,30 @@ export class CodeGenService {
       } else if (file.language.includes('css')) {
         comment.start = '/*';
         comment.end = '*/';
+      } else if (file.language.includes('xaml')) {
+        comment.start = '<!--';
+        comment.end = '-->';
       }
 
-      file.value = [
-        `${comment.start} ${message} ${comment.end}`,
-        `${comment.start} ${version} ${comment.end}`,
-        `${comment.start} ${date} ${comment.end}`,
-        '',
-        file.value
-      ].join('\n');
+      if (file.language.includes('xaml')) {
+        const temp = file.value.trim().split('\n');
+        file.value = [
+          temp.shift(),
+          `${comment.start} ${message} ${comment.end}`,
+          `${comment.start} ${version} ${comment.end}`,
+          `${comment.start} ${date} ${comment.end}`,
+          '',
+          temp.join('\n')
+        ].join('\n');
+      } else {
+        file.value = [
+          `${comment.start} ${message} ${comment.end}`,
+          `${comment.start} ${version} ${comment.end}`,
+          `${comment.start} ${date} ${comment.end}`,
+          '',
+          file.value
+        ].join('\n');
+      }
 
       return file;
     });
