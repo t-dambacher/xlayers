@@ -101,7 +101,8 @@ export abstract class CodeGenVisitor {
         && ast.frame.y === 0
         && parent.frame.width === ast.frame.width
         && parent.frame.height === ast.frame.height
-        && !!ast.style.fills) {
+        && !!ast.style.fills
+        && ast.style.fills[0].color.alpha !== 0) {
           (ast as any).shapeVisited = true;
           return this.colorRatioToHex(ast.style.fills[0].color.red,
                                       ast.style.fills[0].color.green,
