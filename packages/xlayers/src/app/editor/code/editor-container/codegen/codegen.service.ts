@@ -75,15 +75,14 @@ export class CodeGenService {
         start: '//',
         end: ''
       };
-      if (file.language.includes('html')) {
+      if (file.language.includes('html')
+       || file.language.includes('xaml')
+       || file.language.includes('xml')) {
         comment.start = '<!--';
         comment.end = '-->';
       } else if (file.language.includes('css')) {
         comment.start = '/*';
         comment.end = '*/';
-      } else if (file.language.includes('xaml')) {
-        comment.start = '<!--';
-        comment.end = '-->';
       }
 
       if (file.language.includes('xaml')) {
@@ -94,7 +93,7 @@ export class CodeGenService {
           `${comment.start} ${version} ${comment.end}`,
           `${comment.start} ${date} ${comment.end}`,
           '',
-          temp.join('\n')
+          ...temp
         ].join('\n');
       } else {
         file.value = [

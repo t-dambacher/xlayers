@@ -4,40 +4,40 @@ class Point {
     x: number;
     y: number;
 
-    constructor(str_or_x, y = null) {
+    constructor(strOrX: string | number, y: number = null) {
         // a string containing the coords is input
         if (y === null) {
-            const coords: any = this.string_to_coords(str_or_x);
+            const coords: any = this.stringToCoords(strOrX as string);
             if (coords) {
-                this.x = this.dec_round(coords.x);
-                this.y = this.dec_round(coords.y);
+                this.x = this.decRound(coords.x);
+                this.y = this.decRound(coords.y);
             }
-            // the coords are input
+            // the coords numbers are input
         } else {
-            this.x = this.dec_round(str_or_x);
-            this.y = this.dec_round(y);
+            this.x = this.decRound(strOrX as number);
+            this.y = this.decRound(y);
         }
     }
 
     // 2 decimals rounding
-    dec_round(number): number {
+    decRound(number: number): number {
         return Math.round(number * 100 + 0.001) / 100;
     }
 
+    distanceRounded(point: Point): number {
+        return this.decRound(this.distance(point));
+    }
     distance(point: Point): number {
-        return this.dec_round(this.dist(point));
+        return Math.sqrt(this.distanceSquared(point));
     }
-    dist(point: Point): number {
-        return Math.sqrt(this.dist2(point));
+    distanceSquaredRounded(point: Point): number {
+        return this.decRound(this.distanceSquared(point));
     }
-    distance2(point: Point): number {
-        return this.dec_round(this.dist2(point));
-    }
-    dist2(point: Point): number {
+    distanceSquared(point: Point): number {
         return Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2);
     }
 
-    string_to_coords(string): {} {
+    stringToCoords(string: string): RegExpMatchArray['groups'] | boolean {
         const regex = /{(?<x>\-?\d(?:\.\d+)?(?:e\-?\d+)?),\s?(?<y>\-?\d(?:\.\d+)?(?:e\-?\d+)?)}/;
         const match = string.match(regex);
         if (!!match) {
@@ -58,15 +58,15 @@ class Cluster {
     }
 
     updateBarycenter(): void {
-        let avg_x = 0;
-        let avg_y = 0;
+        let avgX = 0;
+        let avgY = 0;
         this.points.forEach(point => {
-            avg_x += point.x;
-            avg_y += point.y;
+            avgX += point.x;
+            avgY += point.y;
         });
-        avg_x /= this.points.length;
-        avg_y /= this.points.length;
-        this.barycenter = new Point(avg_x, avg_y);
+        avgX /= this.points.length;
+        avgY /= this.points.length;
+        this.barycenter = new Point(avgX, avgY);
     }
 
     addPoint(point: Point): void {
@@ -77,22 +77,23 @@ class Cluster {
 
 export class Shape {
     Points: Point[];
-    Top_left: Point;
-    Top_right: Point;
-    Bottom_left: Point;
-    Bottom_right: Point;
+    topLeft: Point;
+    topRight: Point;
+    bottomLeft: Point;
+    bottomRight: Point;
 
     static get error(): number {
         return 0.05;
     }
 
     // check if ABC is orthogonal on B
-    static is_orthogonal(A, B, C): boolean {
-        return Math.abs(A.distance2(B) + B.distance2(C) - A.distance2(C)) < Shape.error;
+    static isOrthogonal(A: Point, B: Point, C: Point): boolean {
+        return Math.abs(A.distanceSquared(B) + B.distanceSquared(C) - A.distanceSquared(C)) < Shape.error;
     }
 
-    constructor(points) {
+    constructor(points: SketchMSCurvePoint[]) {
         this.Points = [];
+
         points.forEach(point => {
             this.Points.push(new Point(point.point));
 
@@ -106,39 +107,39 @@ export class Shape {
     }
 
     // divide the points in 4 clusters
-    cluster_points4(): any {
-        let center_of_mass_x = 0,
-            center_of_mass_y = 0;
+    clusterPoints4(): any {
+        let tempBarycenterX = 0,
+            tempBarycenterY = 0;
         this.Points.forEach(point => {
-            center_of_mass_x += point.x;
-            center_of_mass_y += point.y;
+            tempBarycenterX += point.x;
+            tempBarycenterY += point.y;
         });
-        const Center_of_mass = new Point(center_of_mass_x / this.Points.length, center_of_mass_y / this.Points.length);
+        const barycenter = new Point(tempBarycenterX / this.Points.length, tempBarycenterY / this.Points.length);
 
         const Clusters: any = {};
-        Clusters.Top_left = new Cluster();
-        Clusters.Top_right = new Cluster();
-        Clusters.Bottom_left = new Cluster();
-        Clusters.Bottom_right = new Cluster();
+        Clusters.topLeft = new Cluster();
+        Clusters.topRight = new Cluster();
+        Clusters.bottomLeft = new Cluster();
+        Clusters.bottomRight = new Cluster();
 
         this.Points.forEach(point => {
-            if (point.y < Center_of_mass.y) {
+            if (point.y < barycenter.y) {
                 // TOP
-                if (point.x < Center_of_mass.x) {
+                if (point.x < barycenter.x) {
                     // LEFT
-                    Clusters.Top_left.addPoint(point);
+                    Clusters.topLeft.addPoint(point);
                 } else {
                     // RIGHT
-                    Clusters.Top_right.addPoint(point);
+                    Clusters.topRight.addPoint(point);
                 }
                 // BOTTOM
             } else {
-                if (point.x < Center_of_mass.x) {
+                if (point.x < barycenter.x) {
                     // LEFT
-                    Clusters.Bottom_left.addPoint(point);
+                    Clusters.bottomLeft.addPoint(point);
                 } else {
                     // RIGHT
-                    Clusters.Bottom_right.addPoint(point);
+                    Clusters.bottomRight.addPoint(point);
                 }
             }
         });
@@ -146,12 +147,12 @@ export class Shape {
         return Clusters;
     }
 
-    is_rectangle(): boolean {
+    isRectangle(): boolean {
         if (this.Points.length < 4) {
             return false;
         }
 
-        const Clusters: any = this.cluster_points4();
+        const Clusters: any = this.clusterPoints4();
 
         for (const corner in Clusters) {
             if (Clusters[corner].points.length === 0) {
@@ -159,23 +160,23 @@ export class Shape {
             }
         }
 
-        const top_length = Clusters.Top_left.barycenter.distance(Clusters.Top_right.barycenter);
-        const bottom_length = Clusters.Bottom_left.barycenter.distance(Clusters.Bottom_right.barycenter);
-        const left_length = Clusters.Top_left.barycenter.distance(Clusters.Bottom_left.barycenter);
-        const right_length = Clusters.Top_right.barycenter.distance(Clusters.Bottom_right.barycenter);
+        const topLength = Clusters.topLeft.barycenter.distance(Clusters.topRight.barycenter);
+        const bottomLength = Clusters.bottomLeft.barycenter.distance(Clusters.bottomRight.barycenter);
+        const leftLength = Clusters.topLeft.barycenter.distance(Clusters.bottomLeft.barycenter);
+        const rightLength = Clusters.topRight.barycenter.distance(Clusters.bottomRight.barycenter);
 
-        return Math.abs(top_length - bottom_length) < Shape.error
-            && Math.abs(left_length - right_length) < Shape.error
-            && Shape.is_orthogonal(Clusters.Bottom_left.barycenter, Clusters.Top_left.barycenter, Clusters.Top_right.barycenter);
+        return Math.abs(topLength - bottomLength) < Shape.error
+            && Math.abs(leftLength - rightLength) < Shape.error
+            && Shape.isOrthogonal(Clusters.bottomLeft.barycenter, Clusters.topLeft.barycenter, Clusters.topRight.barycenter);
     }
 
-    is_line(): boolean {
+    isLine(): boolean {
         return this.Points.length === 2
             && Math.abs(this.Points[0].y - this.Points[1].y) < Shape.error;
     }
 
-    is_round(): boolean {
-        if (this.is_rectangle() || this.is_line()) {
+    isRound(): boolean {
+        if (this.isRectangle() || this.isLine()) {
             return false;
         }
 
@@ -184,14 +185,28 @@ export class Shape {
             circle.addPoint(point);
         });
 
-        const radius2 = circle.points[0].distance2(circle.barycenter);
-        let is_circle = true;
+        // if the points are not equally sprayed around the circle,
+        // the barycenter may be different from the actual center of the circle
+        const center = new Point(0.5, 0.5);
+        const radius2 = circle.points[0].distanceSquaredRounded(circle.barycenter);
+        const radiusCenter2 = circle.points[0].distanceSquaredRounded(center);
+
+        let isCircle = true;
+        let isCircleCentered = true;
+
         circle.points.some(point => {
-            if (Math.abs(point.distance2(circle.barycenter) - radius2) > Shape.error) {
-                is_circle = false;
-                return false;
+            if (Math.abs(point.distanceSquaredRounded(circle.barycenter) - radius2) > Shape.error * 2) {
+                isCircle = false;
+                return true;
             }
         });
-        return is_circle;
+        circle.points.some(point => {
+            if (Math.abs(point.distanceSquaredRounded(center) - radiusCenter2) > Shape.error * 2) {
+                isCircleCentered = false;
+                return true;
+            }
+        });
+
+        return isCircle || isCircleCentered;
     }
 }

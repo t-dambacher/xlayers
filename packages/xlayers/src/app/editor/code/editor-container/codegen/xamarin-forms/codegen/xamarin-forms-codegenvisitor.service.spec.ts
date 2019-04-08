@@ -14,7 +14,7 @@ describe('XamarinFormsCodeGenVisitor', () => {
     });
   });
 
-  it('should add some tests', inject(
+  it('should be created', inject(
     [XamarinFormsCodeGenVisitor],
     (service: XamarinFormsCodeGenVisitor) => {
       expect(service).toBeTruthy();

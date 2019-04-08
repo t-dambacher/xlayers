@@ -56,6 +56,7 @@ export abstract class CodeGenVisitor {
         + Math.round(green * 255).toString(16).padStart(2, '0')
         + Math.round(blue * 255).toString(16).padStart(2, '0');
     }
+
     // return colorhex: string or false
     protected checkLayersForBorder(ast: SketchMSLayer): string | boolean {
       let border: string | boolean = false;

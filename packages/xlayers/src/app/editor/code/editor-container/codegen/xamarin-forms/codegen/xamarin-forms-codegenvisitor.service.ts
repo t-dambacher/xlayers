@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
+import { XlayersNgxEditorModel } from '../../codegen.service';
 import { Template } from '../../shared-codegen.service';
 import { XmlCodeGenVisitor } from './xmlcodegenvisitor.service';
-import { strict } from 'assert';
 import { Shape } from './shape.service';
 
 /**
@@ -12,6 +12,7 @@ import { Shape } from './shape.service';
 })
 export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
   readonly SupportedTemplate: Template;
+  fileList: Array<XlayersNgxEditorModel>;
 
   constructor() {
     super();
@@ -19,12 +20,9 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
   }
 
   protected visitLayer(layer: SketchMSLayer, template: string[] = [], depth: number = 0) {
-    const attributes = [];
-
     let content;
-    // bait the transcrcipter
-    const bait = (layer as any)._class;
-    if ('group' === bait) {
+
+    if ((layer as any)._class === 'group') {
       template.push(this.indent(depth, this.openGroup(layer)));
       content = this.visit(layer, template, depth + 1);
       template.push(this.indent(depth + 1, this.closeTag('AbsoluteLayout')));
@@ -43,16 +41,26 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
   }
 
   protected visitText(ast: SketchMSLayer): string {
-    return `<Label Text="${ast.attributedString.string}"
-       FontSize="${ast.attributedString.attributes[0].attributes.MSAttributedStringFontAttribute.attributes.size}"
-       FontFamily="${ast.attributedString.attributes[0].attributes.MSAttributedStringFontAttribute.attributes.name}"
-       TextColor="${this.colorRatioToHex(
-         (ast.attributedString.attributes[0].attributes as any).MSAttributedStringColorAttribute.red,
-         (ast.attributedString.attributes[0].attributes as any).MSAttributedStringColorAttribute.green,
-         (ast.attributedString.attributes[0].attributes as any).MSAttributedStringColorAttribute.blue
-       )}"
-       Opacity="${(ast.attributedString.attributes[0].attributes as any).MSAttributedStringColorAttribute.alpha}"
-       AbsoluteLayout.LayoutBounds="${Math.round( ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"/>`;
+    const attr: any = {};
+    const string = ast.attributedString;
+    const fontAttribute = string.attributes[0].attributes.MSAttributedStringFontAttribute.attributes;
+    const colorAttribute = (string.attributes[0].attributes as any).MSAttributedStringColorAttribute;
+
+    attr.Text = string.string;
+    attr.FontSize = fontAttribute.size;
+    attr.FontFamily = fontAttribute.name;
+    attr.TextColor = this.colorRatioToHex(
+      colorAttribute.red,
+      colorAttribute.green,
+      colorAttribute.blue
+    );
+    attr.Opacity = colorAttribute.alpha;
+    attr['AbsoluteLayout.LayoutBounds'] = `${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}`;
+
+    return '<Label '
+    + Object.keys(attr).map(function(key) {
+      return key + '="' + attr[key] + '"';
+    }).join('\n' + (' ').repeat(7));
   }
 
   protected visitShape(ast: SketchMSLayer): string {
@@ -61,47 +69,14 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
     }
 
     const a = new Shape((ast as any).points);
-
-    if (a.is_round()) {
-      return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
-        + ` CornerRadius="${ast.frame.width / 2}"`
-        + (!!ast.style.fills
-            ? ' BackgroundColor="'
-              + this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)
-              + '" Opacity="' + ast.style.fills[0].color.alpha + '"'
-          : '')
-        + (!!ast.style.borders
-            ? ' BorderColor="'
-              + this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue) + '"'
-            : '')
-        + ' />';
-    } else if (a.is_rectangle()) {
-      if (!!ast.style.borders) {
-        return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
-        + ` CornerRadius="0"`
-        + ` BorderColor="${this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue)}"`
-        + (!!ast.style.fills
-            ? ` BackgroundColor="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
-              + ` Opacity="${ast.style.fills[0].color.alpha}"`
-            : ``)
-        + ` />`;
-      } else if (!!ast.style.fills) {
-        return `<BoxView AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
-        + ` Color="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
-        + ` Opacity="${ast.style.fills[0].color.alpha}" />`;
-      } else {
-        return ``;
-      }
-    } else if (a.is_line()) {
-      console.log(ast);
-      return `<BoxView AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, 1}"`
-        + (!!ast.style.fills
-            ? ` Color="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
-            + ` Opacity="${ast.style.fills[0].color.alpha}" />`
-            : ` Color="${this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue)}"`
-            + ` Opacity="${ast.style.borders[0].color.alpha}" />`);
+    if (a.isRound()) {
+      return this.visitRound(ast);
+    } else if (a.isRectangle()) {
+      return this.visitRectangle(ast);
+    } else if (a.isLine()) {
+      return this.visitLine(ast);
     } else {
-      return `<!-- ${(ast as any).shape} -->`;
+      return this.visitSvg(ast);
     }
   }
 
@@ -114,17 +89,70 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
       return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
         + ` CornerRadius="${((ast as any)._class === 'oval' ? ast.frame.width / 2 : '0')}"`
         + (!!ast.style.fills
-            ? ' BackgroundColor="'
-              + this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)
-              + '" Opacity="' + ast.style.fills[0].color.alpha + '"'
+          ? ' BackgroundColor="'
+          + this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)
+          + '" Opacity="' + ast.style.fills[0].color.alpha + '"'
           : '')
         + (!!ast.style.borders
-            ? ' BorderColor="'
-              + this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue) + '"'
-            : '')
+          ? ' BorderColor="'
+          + this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue) + '"'
+          : '')
         + ' />';
     }
 
+  }
+
+  protected visitRound(ast: SketchMSLayer): string {
+    return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
+      + ` CornerRadius="${ast.frame.width / 2}"`
+      + (!!ast.style.fills
+        ? ' BackgroundColor="'
+        + this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)
+        + '" Opacity="' + ast.style.fills[0].color.alpha + '"'
+        : '')
+      + (!!ast.style.borders
+        ? ' BorderColor="'
+        + this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue) + '"'
+        : '')
+      + ' />';
+  }
+
+  protected visitRectangle(ast: SketchMSLayer): string {
+    if (!!ast.style.borders) {
+      return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
+        + ` CornerRadius="0"`
+        + ` BorderColor="${this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue)}"`
+        + (!!ast.style.fills
+          ? ` BackgroundColor="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
+          + ` Opacity="${ast.style.fills[0].color.alpha}"`
+          : ``)
+        + ` />`;
+    } else if (!!ast.style.fills) {
+      return `<BoxView AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
+        + ` Color="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
+        + ` Opacity="${ast.style.fills[0].color.alpha}" />`;
+    } else {
+      return '';
+    }
+  }
+
+  protected visitLine(ast: SketchMSLayer): string {
+    return `<BoxView AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, 1"`
+      + (!!ast.style.fills
+        ? ` Color="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
+        + ` Opacity="${ast.style.fills[0].color.alpha}" />`
+        : ` Color="${this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue)}"`
+        + ` Opacity="${ast.style.borders[0].color.alpha}" />`);
+  }
+
+  protected visitSvg(ast: SketchMSLayer): string {
+    this.fileList.push({
+      uri: ast.do_objectID + '.svg',
+      value: (ast as any).shape,
+      language: 'xml',
+      kind: 'xamarinForms'
+    });
+    return `<ffSvg:SvgCachedImage Source="${ast.do_objectID}.svg"/>`;
   }
 
   protected openGroup(ast: SketchMSLayer): string {
