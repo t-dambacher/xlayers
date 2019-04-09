@@ -3,10 +3,10 @@ import { async, TestBed } from '@angular/core/testing';
 import { SketchStyleParserService, SketchData } from '@xlayers/sketchapp-parser';
 import { readdirSync, readFile } from 'fs';
 import * as jszip from 'jszip';
-import { SketchContainerComponent } from '@app/editor/preview/viewer/sketch-container/sketch-container.component';
+import { ViewerContainerComponent } from '@app/editor/preview/viewer/container/container.component';
 
 const VERSION_LIST = [50, 51, 52, 53];
-const SKETCH_PATH = './packages/xlayers/src/assets/demos/sketchapp';
+const SKETCH_PATH = './src/assets/demos/sketchapp';
 
 async function loadSketch(version, fileName) {
   const _data = {
@@ -66,7 +66,7 @@ describe('sketch parser', () => {
     TestBed.configureTestingModule({
       schemas: [NO_ERRORS_SCHEMA],
       providers: [SketchStyleParserService],
-      declarations: [SketchContainerComponent]
+      declarations: [ViewerContainerComponent]
     }).compileComponents();
     sketchStyleParserService = TestBed.get(SketchStyleParserService);
   }));
