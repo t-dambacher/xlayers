@@ -60,7 +60,7 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
     return '<Label '
     + Object.keys(attr).map(function(key) {
       return key + '="' + attr[key] + '"';
-    }).join('\n' + (' ').repeat(7));
+    }).join('\n' + (' ').repeat(7)) + '/>';
   }
 
   protected visitShape(ast: SketchMSLayer): string {
