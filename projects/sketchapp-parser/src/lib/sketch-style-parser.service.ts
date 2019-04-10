@@ -325,7 +325,7 @@ export class SketchStyleParserService {
     const svg = [
       `<polygon`,
       ...config,
-      `points="${segments.join(' ')}"`,
+      `points="${segments}"`,
       '/>'
     ];
 
