@@ -16,10 +16,9 @@ ${codeBlock}
   2 - Import the MainPage.xaml file into your main project
       and rename the namespace to fit your project
 
-  3 - Import the *.svg and images into your platform specific projects
-        IOS & UWP : place the files in root folder
-        Android : place the files in Ressource/drawable
-      Set the build action of the files to 'Content'
+  3 - Import the *.svg and images into your shared project
+      Set the build action of the files to 'Embedded resource'
+      Set the right namespace and path to files in ffSvg elements source in the MainPage.xaml
 
   4 - Initialise the FFImageLoading library in your platform specific projects
       after initialising components

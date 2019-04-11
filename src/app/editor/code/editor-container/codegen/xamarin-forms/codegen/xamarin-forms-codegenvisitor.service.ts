@@ -85,7 +85,8 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
       return null;
     }
 
-    if ((ast as any)._class === 'oval' || (ast as any)._class === 'rectangle') {
+    if ((ast as any)._class === 'oval' || (ast as any)._class === 'rectangle'
+        && (!!ast.style.fills || !!ast.style.borders)) {
       return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
         + ` CornerRadius="${((ast as any)._class === 'oval' ? ast.frame.width / 2 : '0')}"`
         + (!!ast.style.fills
@@ -146,13 +147,21 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
   }
 
   protected visitSvg(ast: SketchMSLayer): string {
+    const svgFileName = this.sanitizeSvgFileName(ast.do_objectID);
     this.fileList.push({
-      uri: ast.do_objectID + '.svg',
+      uri: svgFileName,
       value: (ast as any).shape,
       language: 'xml',
       kind: 'xamarinForms'
     });
-    return `<ffSvg:SvgCachedImage Source="${ast.do_objectID}.svg"/>`;
+    return `<ffSvg:SvgCachedImage Source="resource://xLayers.path.to.${svgFileName}"`
+    + `\n` + (` `).repeat(22)
+    + `AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
+    + `/>`;
+  }
+
+  private sanitizeSvgFileName(name: string): string {
+    return '_' + name.toLowerCase().replace(/[^a-z0-9\_]/g, '_') + '.svg';
   }
 
   protected openGroup(ast: SketchMSLayer): string {
