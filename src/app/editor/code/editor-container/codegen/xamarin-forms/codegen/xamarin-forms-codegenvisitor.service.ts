@@ -93,12 +93,12 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
           ? ' BackgroundColor="'
           + this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)
           + '" Opacity="' + ast.style.fills[0].color.alpha + '"'
-          : '')
+          : ' BackgroundColor="Transparent"')
         + (!!ast.style.borders
           ? ' BorderColor="'
           + this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue) + '"'
           : '')
-        + ' />';
+        + ' HasShadow="false" />';
     }
 
   }
@@ -110,12 +110,12 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
         ? ' BackgroundColor="'
         + this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)
         + '" Opacity="' + ast.style.fills[0].color.alpha + '"'
-        : '')
+        : ' BackgroundColor="Transparent"')
       + (!!ast.style.borders
         ? ' BorderColor="'
         + this.colorRatioToHex(ast.style.borders[0].color.red, ast.style.borders[0].color.green, ast.style.borders[0].color.blue) + '"'
         : '')
-      + ' />';
+      + ' HasShadow="false" />';
   }
 
   protected visitRectangle(ast: SketchMSLayer): string {
@@ -126,8 +126,8 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
         + (!!ast.style.fills
           ? ` BackgroundColor="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
           + ` Opacity="${ast.style.fills[0].color.alpha}"`
-          : ``)
-        + ` />`;
+          : ` BackgroundColor="Transparent"`)
+        + ` HasShadow="false" />`;
     } else if (!!ast.style.fills) {
       return `<BoxView AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
         + ` Color="${this.colorRatioToHex(ast.style.fills[0].color.red, ast.style.fills[0].color.green, ast.style.fills[0].color.blue)}"`
@@ -171,7 +171,7 @@ export class XamarinFormsCodeGenVisitor extends XmlCodeGenVisitor {
     return `<Frame AbsoluteLayout.LayoutBounds="${Math.round(ast.frame.x)}, ${Math.round(ast.frame.y)}, ${Math.round(ast.frame.width)}, ${Math.round(ast.frame.height)}"`
       + ` CornerRadius="0" Padding="0"`
       + (border !== false ? ' BorderColor="' + border + '"' : '')
-      + (background !== false ? ' BackgroundColor="' + background + '"' : '')
+      + ' BackgroundColor="' + (background !== false ? background : 'Transparent') + '"'
       + `>`
       + `\n  <AbsoluteLayout>`;
   }
